@@ -19,6 +19,14 @@ spec:
 
   managed:
     roles:
+      - name: admin
+        ensure: present
+        login: true
+        superuser: true
+        createdb: true
+        createrole: true
+        passwordSecret:
+          name: pg-role-admin
       - name: paperclip
         ensure: present
         login: true
@@ -44,12 +52,6 @@ spec:
   bootstrap:
     initdb:
       postInitSQL:
-        - CREATE ROLE paperclip WITH LOGIN PASSWORD 'changeme';
-        - CREATE ROLE necronia WITH LOGIN PASSWORD 'changeme';
-        - CREATE ROLE techyon WITH LOGIN PASSWORD 'changeme';
-        - CREATE DATABASE paperclip OWNER paperclip;
-        - CREATE DATABASE necronia OWNER necronia;
-        - CREATE DATABASE techyon OWNER techyon;
-        - GRANT ALL PRIVILEGES ON DATABASE paperclip TO paperclip;
-        - GRANT ALL PRIVILEGES ON DATABASE necronia TO necronia;
-        - GRANT ALL PRIVILEGES ON DATABASE techyon TO techyon;
+        - CREATE DATABASE paperclip;
+        - CREATE DATABASE necronia;
+        - CREATE DATABASE techyon;
