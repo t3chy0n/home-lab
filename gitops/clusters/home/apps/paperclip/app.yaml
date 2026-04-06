@@ -1,5 +1,5 @@
 repoURL: "ghcr.io/t3chy0n/charts"
 chart: "paperclip"
-targetRevision: "0.1.3"
+targetRevision: "0.1.4"
 releaseName: "paperclip"
 namespace: "paperclip"
