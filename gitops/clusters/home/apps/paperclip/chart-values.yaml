@@ -5,6 +5,8 @@ image:
 imagePullSecrets:
   - name: ghcr-docker
 
+betterAuthSecret: "7fcc4bc0c4080324badf8297b692bf8d035203273275c3fa03ff800d8fcc7756"
+
 persistence:
   enabled: true
   size: 5Gi
