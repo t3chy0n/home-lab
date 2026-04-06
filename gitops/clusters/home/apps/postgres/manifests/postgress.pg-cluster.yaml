@@ -19,7 +19,7 @@ spec:
 
   managed:
     roles:
-      - name: admin
+      - name: tarjei
         ensure: present
         login: true
         superuser: true
