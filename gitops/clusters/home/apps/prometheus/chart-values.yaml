@@ -24,6 +24,14 @@ grafana:
       allowed_domains: techyon.dev
       hosted_domain: techyon.dev
       allow_sign_up: true
+    # All Google-SSO users are auto-assigned Admin on first login — same
+    # policy as ArgoCD (policy.default: role:admin). Single-operator lab,
+    # the hosted_domain claim restricts logins to techyon.dev so no
+    # outsiders can land here. If you ever need to scope this down, switch
+    # to a JMESPath role_attribute_path on [auth.google] instead.
+    users:
+      auto_assign_org: true
+      auto_assign_org_role: Admin
     # Keep the local admin login form available as a break-glass path.
     auth:
       disable_login_form: false
