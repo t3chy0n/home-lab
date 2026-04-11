@@ -2,3 +2,26 @@
 #https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
 crds:
   enabled: true
+
+grafana:
+  # Loki and Tempo are deployed as sibling ArgoCD apps in this same namespace
+  # (see ../loki/ and ../tempo/). They plug into the Grafana bundled with
+  # kube-prometheus-stack as additional datasources. The derivedFields entry
+  # on the Loki datasource turns any "trace_id=<hex>" in a log line into a
+  # clickable link that jumps to the matching Tempo trace view.
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki.monitoring.svc.cluster.local:3100
+      jsonData:
+        derivedFields:
+          - name: TraceID
+            matcherRegex: "trace_id=(\\w+)"
+            url: "$${__value.raw}"
+            datasourceUid: tempo
+    - name: Tempo
+      type: tempo
+      uid: tempo
+      access: proxy
+      url: http://tempo.monitoring.svc.cluster.local:3200

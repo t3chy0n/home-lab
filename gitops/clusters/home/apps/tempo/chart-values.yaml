@@ -1,0 +1,31 @@
+# grafana/tempo chart — monolithic (single-binary) mode, filesystem backend.
+# Not to be confused with grafana/tempo-distributed. Receives OTLP traces from
+# the in-cluster alloy DaemonSet, the alloy-gateway (for external apps), and
+# any directly-instrumented in-cluster workloads. Grafana reads traces via the
+# Tempo datasource wired in prometheus/chart-values.yaml.
+# Chart reference: https://github.com/grafana/helm-charts/tree/main/charts/tempo
+
+tempo:
+  retention: 168h   # 7 days
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClassName: qnap-iscsi
+
+service:
+  type: ClusterIP

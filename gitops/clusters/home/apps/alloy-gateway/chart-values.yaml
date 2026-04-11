@@ -1,0 +1,68 @@
+# grafana/alloy chart — Deployment role: receives OTLP logs/traces from apps
+# outside the cluster (LAN) and forwards them to in-cluster Loki and Tempo.
+# Exposed via Ingress at otel.lab.techyon.dev (see manifests/alloy-gateway.ingress.yaml).
+#
+# The service this chart creates is named after the release (alloy-gateway),
+# with OTLP HTTP on 4318 and OTLP gRPC on 4317.
+
+fullnameOverride: alloy-gateway
+
+controller:
+  type: deployment
+  replicas: 1
+
+alloy:
+  configMap:
+    content: |
+      otelcol.receiver.otlp "default" {
+        grpc {
+          endpoint = "0.0.0.0:4317"
+        }
+        http {
+          endpoint = "0.0.0.0:4318"
+        }
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]
+          logs   = [otelcol.exporter.loki.default.input]
+        }
+      }
+
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo.monitoring.svc.cluster.local:4317"
+          tls {
+            insecure             = true
+            insecure_skip_verify = true
+          }
+        }
+      }
+
+      otelcol.exporter.loki "default" {
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+        }
+      }
+
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+
+service:
+  enabled: true
+  type: ClusterIP
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true

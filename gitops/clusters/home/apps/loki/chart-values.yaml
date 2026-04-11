@@ -1,0 +1,76 @@
+# grafana/loki chart — SingleBinary mode, filesystem backend on Trident iSCSI.
+# Goal: lightweight single-pod Loki that pairs with the existing kube-prometheus-stack
+# Grafana via the Loki datasource wired in prometheus/chart-values.yaml.
+# Chart reference: https://github.com/grafana/loki/tree/main/production/helm/loki
+
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  storage:
+    type: filesystem
+  pattern_ingester:
+    enabled: false
+  limits_config:
+    retention_period: 336h       # 14 days
+    allow_structured_metadata: true
+    volume_enabled: true
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+  ingester:
+    chunk_encoding: snappy
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: qnap-iscsi
+
+# Disable all the distributed components — SingleBinary covers them.
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+# No memcached — not needed at home-lab scale.
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# Cluster-internal access only. Grafana talks to the loki service directly.
+gateway:
+  enabled: false
+
+# Skip test harness and canary.
+test:
+  enabled: false
+lokiCanary:
+  enabled: false
+
+# Self-monitoring off — we already have kube-prometheus-stack scraping metrics,
+# and ServiceMonitor wiring can be turned on later with a label match.
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    enabled: false
+  serviceMonitor:
+    enabled: false
