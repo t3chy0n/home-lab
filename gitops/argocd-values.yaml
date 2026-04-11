@@ -3,6 +3,33 @@ configs:
   cm:
     # lets Argo CD discover Applications in other namespaces
     application.instanceLabelKey: argocd.argoproj.io/instance
+    # Canonical external URL — used in OAuth redirect construction and
+    # notification/template links.
+    url: https://argocd.lab.techyon.dev
+    # Google Workspace OIDC. ClientID / ClientSecret are pulled from the
+    # argocd-google-oidc Secret (populated from 1Password via ExternalSecrets;
+    # see gitops/clusters/home/apps/external-secrets/manifests/google-oauth.external-secret.yaml).
+    # The $<secret>:<field> dollar syntax only works if the Secret has the
+    # app.kubernetes.io/part-of: argocd label, which the ExternalSecret sets.
+    oidc.config: |
+      name: Google
+      issuer: https://accounts.google.com
+      clientID: $argocd-google-oidc:clientID
+      clientSecret: $argocd-google-oidc:clientSecret
+      requestedScopes:
+        - openid
+        - profile
+        - email
+      # hd claim restricts logins to techyon.dev Workspace users only —
+      # anyone outside the Workspace is rejected before reaching RBAC.
+      requestedIDTokenClaims:
+        hd:
+          essential: true
+          value: techyon.dev
+  # Any techyon.dev user who passes the hd claim check above becomes admin.
+  # Single-operator lab — no per-user policy needed.
+  rbac:
+    policy.default: role:admin
   params:
     # keep default HTTPS on server (safer). If you want HTTP only:
     server.insecure: "true"

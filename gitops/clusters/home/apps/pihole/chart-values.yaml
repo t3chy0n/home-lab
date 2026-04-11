@@ -30,7 +30,7 @@ ingress:
     gethomepage.dev/description: PIHole Administration Panel
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Administration
-    gethomepage.dev/icon: piholevault.png
+    gethomepage.dev/icon: pi-hole.png
     gethomepage.dev/name: PIHole DNS
 
   hosts:

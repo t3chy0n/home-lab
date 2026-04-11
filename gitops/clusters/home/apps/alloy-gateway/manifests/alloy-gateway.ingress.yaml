@@ -13,7 +13,7 @@ metadata:
     gethomepage.dev/group: Observability
     gethomepage.dev/name: OTel Gateway
     gethomepage.dev/description: OTLP ingest for external apps
-    gethomepage.dev/icon: opentelemetry.png
+    gethomepage.dev/icon: alloy.png
     gethomepage.dev/href: https://otel.lab.techyon.dev
 spec:
   ingressClassName: nginx

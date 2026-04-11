@@ -4,6 +4,30 @@ crds:
   enabled: true
 
 grafana:
+  # Google Workspace OIDC. Client ID + Secret are injected as env vars from
+  # the grafana-google-oidc Secret (populated from 1Password via the
+  # ExternalSecret in external-secrets/manifests/google-oauth.external-secret.yaml).
+  # Grafana reads GF_AUTH_GOOGLE_CLIENT_ID / GF_AUTH_GOOGLE_CLIENT_SECRET from
+  # the environment and overrides the matching grafana.ini values — so we
+  # intentionally omit literal client_id / client_secret in grafana.ini below.
+  envFromSecret: grafana-google-oidc
+
+  grafana.ini:
+    server:
+      root_url: https://grafana.lab.techyon.dev
+    auth.google:
+      enabled: true
+      scopes: openid email profile
+      auth_url: https://accounts.google.com/o/oauth2/v2/auth
+      token_url: https://oauth2.googleapis.com/token
+      api_url: https://openidconnect.googleapis.com/v1/userinfo
+      allowed_domains: techyon.dev
+      hosted_domain: techyon.dev
+      allow_sign_up: true
+    # Keep the local admin login form available as a break-glass path.
+    auth:
+      disable_login_form: false
+
   # Loki and Tempo are deployed as sibling ArgoCD apps in this same namespace
   # (see ../loki/ and ../tempo/). They plug into the Grafana bundled with
   # kube-prometheus-stack as additional datasources. The derivedFields entry
