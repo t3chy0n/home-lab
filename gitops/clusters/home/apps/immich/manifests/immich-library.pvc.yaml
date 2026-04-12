@@ -1,0 +1,14 @@
+# 100 Gi SMB-backed PVC for the Immich photo library. Using qnap-samba
+# so the library is directly browsable from the QNAP NAS GUI and
+# mountable from any LAN laptop via SMB — you can drop photos into
+# the share and Immich picks them up via external library scan.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: qnap-samba
+  resources:
+    requests:
+      storage: 100Gi

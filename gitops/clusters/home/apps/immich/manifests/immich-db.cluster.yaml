@@ -1,0 +1,46 @@
+# Dedicated CNPG Cluster for Immich, fully isolated from postgres-ha.
+# Uses the tensorchord/cloudnative-vectorchord image which is a drop-in
+# for CloudNativePG with the VectorChord extension pre-installed —
+# required for Immich's smart search / face recognition embeddings.
+#
+# 2 instances (1 primary + 1 replica) with modest resources. The existing
+# CNPG operator (deployed via the "postgres" ArgoCD app in the databases
+# namespace) manages this Cluster CR — no second operator needed.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-db
+spec:
+  instances: 2
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-0.4.3
+
+  storage:
+    size: 20Gi
+    storageClass: qnap-iscsi
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: "256MB"
+    shared_preload_libraries:
+      - "vchord.so"
+
+  monitoring:
+    enablePodMonitor: true
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  bootstrap:
+    initdb:
+      database: immich
+      owner: immich
+      secret:
+        name: pg-role-immich
+      postInitSQL:
+        - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;

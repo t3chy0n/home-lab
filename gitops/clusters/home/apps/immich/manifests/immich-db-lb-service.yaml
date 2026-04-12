@@ -1,0 +1,24 @@
+# LAN-facing Postgres Service for the Immich CNPG cluster. Mirrors
+# the postgres-ha-lb pattern: MetalLB IP + external-dns Cloudflare record.
+# Useful for debugging, pgAdmin, or running migrations from a laptop.
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-db-lb
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: immich-db.lab.techyon.dev
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Immich DB
+    gethomepage.dev/description: Immich PostgreSQL (CNPG)
+    gethomepage.dev/group: Databases
+    gethomepage.dev/icon: postgres.png
+spec:
+  type: LoadBalancer
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    cnpg.io/cluster: immich-db
+    role: primary

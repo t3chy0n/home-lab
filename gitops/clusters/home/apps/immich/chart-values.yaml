@@ -1,0 +1,109 @@
+# Immich v2.6.3 — self-hosted photo library. Chart 0.11.1 is built on
+# the bjw-s common library (not the old sub-chart pattern from 0.9.x).
+#
+# External dependencies:
+#   - Postgres: dedicated CNPG Cluster in this namespace (see manifests/immich-db.cluster.yaml)
+#   - Redis: shared cluster in the redis namespace (see ../redis/)
+#   - OAuth: config file from ExternalSecret (see manifests/immich-config.external-secret.yaml)
+#   - Library storage: 100Gi SMB PVC on QNAP NAS (see manifests/immich-library.pvc.yaml)
+
+# --- Shared env vars (applied to all Immich components) ---
+controllers:
+  main:
+    annotations:
+      # Reloader rolls the Deployment when redis-auth-replicated or
+      # immich-config Secrets change. Does NOT roll on immich-db password
+      # changes (Postgres stores the password in the DB on first init).
+      reloader.stakater.com/auto: "true"
+    containers:
+      main:
+        env:
+          # --- Dedicated CNPG Postgres (cluster-internal) ---
+          DB_HOSTNAME: immich-db-rw.immich.svc.cluster.local
+          DB_PORT: "5432"
+          DB_USERNAME: immich
+          DB_DATABASE_NAME: immich
+          DB_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: pg-role-immich
+                key: password
+
+          # --- Shared Redis (Sentinel mode in redis namespace) ---
+          # Connect directly to the main redis service on 6379. The
+          # bitnami chart routes this to the current Sentinel-elected
+          # master. BullMQ/ioredis reconnects transparently on failover.
+          REDIS_HOSTNAME: redis.redis.svc.cluster.local
+          REDIS_PORT: "6379"
+          REDIS_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: redis-auth-replicated
+                key: password
+
+        resources:
+          requests: { cpu: 200m, memory: 512Mi }
+          limits:   { cpu: 2000m, memory: 1536Mi }
+
+# --- Immich-level config ---
+immich:
+  persistence:
+    library:
+      existingClaim: immich-library
+
+  # OAuth config from ExternalSecret (see manifests/immich-config.external-secret.yaml).
+  # The Secret's key is "immich-config.json" which the chart mounts
+  # as the Immich config file. configurationKind must be Secret since
+  # the OAuth client credentials are sensitive.
+  existingConfiguration: immich-config
+  configurationKind: Secret
+
+# --- Bundled Valkey (Redis-compatible cache) OFF ---
+# Immich uses the shared Redis from Phase 1 via REDIS_HOSTNAME above.
+valkey:
+  enabled: false
+
+# --- Immich Server ---
+server:
+  enabled: true
+  ingress:
+    main:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: cloudflare-ca
+        # Immich handles big photo uploads — raise the nginx body limit.
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        # Immich has native Google OAuth — do NOT wrap with oauth2-proxy.
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: Immich
+        gethomepage.dev/description: Photo library
+        gethomepage.dev/group: Home
+        gethomepage.dev/icon: immich.png
+      hosts:
+        - host: immich.lab.techyon.dev
+          paths:
+            - path: /
+              service:
+                identifier: main
+      tls:
+        - hosts: [immich.lab.techyon.dev]
+          secretName: immich-tls
+
+# --- Machine Learning ---
+machine-learning:
+  enabled: true
+  controllers:
+    main:
+      containers:
+        main:
+          resources:
+            requests: { cpu: 200m, memory: 1Gi }
+            limits:   { cpu: 2000m, memory: 3Gi }
+  persistence:
+    cache:
+      enabled: true
+      size: 10Gi
+      type: persistentVolumeClaim
+      accessMode: ReadWriteOnce
+      storageClass: qnap-iscsi
