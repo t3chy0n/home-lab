@@ -43,10 +43,12 @@ spec:
       secret:
         name: pg-role-immich
       postInitSQL:
-        # pgvector (vector) is a dependency of vchord and must be created
-        # first. Both run as the postgres superuser here so the non-superuser
-        # immich role doesn't need to CREATE EXTENSION at Immich startup —
-        # Immich's "CREATE EXTENSION IF NOT EXISTS vchord CASCADE" will see
-        # them already installed and no-op.
+        # Immich's migrations create several extensions (vector, vchord,
+        # earthdistance, cube, pg_trgm, unaccent, etc.) using CREATE
+        # EXTENSION. This requires superuser privileges. Since this is a
+        # dedicated single-tenant cluster for Immich only, granting
+        # superuser is safe and avoids chasing every new extension Immich
+        # adds across versions.
+        - ALTER USER immich SUPERUSER;
         - CREATE EXTENSION IF NOT EXISTS vector;
         - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
