@@ -1,21 +1,8 @@
-# LAN-facing Redis Service. Mirrors the postgres-ha-lb pattern exactly:
-# MetalLB allocates an IP from the shared pool, external-dns registers
-# redis.lab.techyon.dev → that IP in Cloudflare, cert-manager is not
-# involved (Redis protocol is TCP, not HTTPS). Reachable from any LAN
-# client using the auth password stored in the RedisHA 1Password item.
-#
-# With sentinel.enabled=true, bitnami's chart creates a single "redis-node"
-# StatefulSet where every pod runs both Redis and a Sentinel sidecar.
-# The selector below matches all nodes (app.kubernetes.io/component: node).
-#
-# Sentinel-aware clients (like ioredis/BullMQ):
-#   Connect to redis.lab.techyon.dev:26379, ask for master "mymaster",
-#   then connect to the returned pod on 6379.
-#
-# Simple clients (redis-cli):
-#   Connect to redis.lab.techyon.dev:6379. This round-robins across all
-#   nodes — writes to a replica get a READONLY error, causing the client
-#   to retry. For a home lab this is fine; production would pin to master.
+# LAN-facing Redis Service pointing at the master only. Mirrors the
+# postgres-ha-lb pattern: MetalLB IP + external-dns Cloudflare record.
+# With plain replication (no Sentinel), bitnami creates a dedicated
+# redis-master StatefulSet labeled component=master — writes always
+# reach the correct pod.
 apiVersion: v1
 kind: Service
 metadata:
@@ -24,7 +11,7 @@ metadata:
     external-dns.alpha.kubernetes.io/hostname: redis.lab.techyon.dev
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: Redis
-    gethomepage.dev/description: Shared LAN Redis (Sentinel)
+    gethomepage.dev/description: Shared LAN Redis
     gethomepage.dev/group: Databases
     gethomepage.dev/icon: redis.png
 spec:
@@ -34,11 +21,7 @@ spec:
       port: 6379
       targetPort: 6379
       protocol: TCP
-    - name: sentinel
-      port: 26379
-      targetPort: 26379
-      protocol: TCP
   selector:
     app.kubernetes.io/instance: redis
     app.kubernetes.io/name: redis
-    app.kubernetes.io/component: node
+    app.kubernetes.io/component: master

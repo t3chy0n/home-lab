@@ -29,11 +29,11 @@ controllers:
                 name: pg-role-immich
                 key: password
 
-          # --- Shared Redis (Sentinel mode in redis namespace) ---
-          # Connect directly to the main redis service on 6379. The
-          # bitnami chart routes this to the current Sentinel-elected
-          # master. BullMQ/ioredis reconnects transparently on failover.
-          REDIS_HOSTNAME: redis.redis.svc.cluster.local
+          # --- Shared Redis (plain replication, no Sentinel) ---
+          # Connect to the master-only Service. Bitnami's chart creates
+          # redis-master (component=master) separate from redis-replicas,
+          # so writes always reach the correct pod.
+          REDIS_HOSTNAME: redis-master.redis.svc.cluster.local
           REDIS_PORT: "6379"
           REDIS_PASSWORD:
             valueFrom:

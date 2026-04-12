@@ -1,23 +1,22 @@
-# Shared in-cluster Redis with replication + Sentinel, exposed on the LAN as
-# redis.lab.techyon.dev via a MetalLB LoadBalancer Service (see
-# manifests/redis-lb-service.yaml). Every stateful consumer in the lab that
-# needs a Redis cache points here — Immich is the first one.
+# Shared in-cluster Redis with replication (no Sentinel), exposed on the
+# LAN as redis.lab.techyon.dev via a MetalLB LoadBalancer Service (see
+# manifests/redis-lb-service.yaml). Every stateful consumer in the lab
+# that needs a Redis cache points here — Immich is the first one.
+#
+# Plain replication creates SEPARATE master + replica StatefulSets with
+# dedicated Services (redis-master:6379, redis-replicas:6379). Write
+# clients connect to redis-master — no READONLY errors. The trade-off
+# vs Sentinel: no automatic failover, but for a home lab job queue that's
+# fine — StatefulSet restarts a dead master pod within seconds.
 #
 # Credentials come from the redis-auth Secret (populated by ExternalSecrets
 # from the RedisHA 1Password item). Rotating the password in 1Password
-# flows through automatically because:
-#   - commonAnnotations places reloader.stakater.com/auto=true on the
-#     redis-node StatefulSet (sentinel mode uses a single StatefulSet for
-#     all nodes, not separate master/replica)
-#   - ESO re-reads the Secret within 15 min
-#   - Reloader detects the content change and rolls the StatefulSet
-#   - new pods come up with the new requirepass
+# flows through automatically via Reloader (commonAnnotations).
 
 architecture: replication
 
-# Reloader annotation on every resource. Reloader only acts on workloads
-# (StatefulSet, Deployment, DaemonSet) and ignores Services/ConfigMaps,
-# so the extra annotations on non-workload resources are harmless.
+# Reloader annotation — rolls both master and replica StatefulSets
+# whenever the redis-auth Secret content changes.
 commonAnnotations:
   reloader.stakater.com/auto: "true"
 
@@ -26,9 +25,6 @@ auth:
   existingSecret: redis-auth
   existingSecretPasswordKey: password
 
-# With sentinel.enabled, bitnami merges master + replicas into one
-# StatefulSet named "redis-node". The master/replica sections below
-# still control persistence and resource limits per pod.
 master:
   persistence:
     enabled: true
@@ -39,7 +35,7 @@ master:
     limits:   { cpu: 500m, memory: 512Mi }
 
 replica:
-  replicaCount: 2
+  replicaCount: 1
   persistence:
     enabled: true
     storageClass: qnap-iscsi
@@ -48,13 +44,10 @@ replica:
     requests: { cpu: 100m, memory: 256Mi }
     limits:   { cpu: 500m, memory: 512Mi }
 
+# Sentinel disabled — plain replication gives us separate master/replica
+# Services which is what we need for write-only clients like Immich.
 sentinel:
-  enabled: true
-  quorum: 2
-  masterSet: mymaster
-  resources:
-    requests: { cpu: 50m, memory: 64Mi }
-    limits:   { cpu: 200m, memory: 128Mi }
+  enabled: false
 
 metrics:
   enabled: true
