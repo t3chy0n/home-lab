@@ -1,0 +1,5 @@
+repoURL: "https://stakater.github.io/stakater-charts"
+chart: "reloader"
+targetRevision: "2.2.9"
+releaseName: "reloader"
+namespace: "reloader"

@@ -1,0 +1,37 @@
+# Stakater Reloader — watches Secret / ConfigMap changes cluster-wide and
+# rolls the owning Deployment/StatefulSet whenever the referenced resource
+# content actually changes. Paired with ExternalSecrets Operator, this gives
+# end-to-end 1Password-driven credential rotation:
+#
+#   user edits 1Password item
+#     → ExternalSecret re-reads (refreshInterval)
+#     → Kubernetes Secret content updates
+#     → Reloader rolls workloads annotated with reloader.stakater.com/auto: "true"
+#     → new pods come up with the new credential
+#
+# See gitops/clusters/home/apps/redis/chart-values.yaml for an example of
+# the annotation on a StatefulSet.
+
+reloader:
+  # Watch resources in every namespace — default is true, we set it
+  # explicitly to document intent.
+  watchGlobally: true
+
+  # Do NOT roll workloads on creation events (e.g. when a namespace is first
+  # populated). Only roll when the referenced Secret/ConfigMap data changes.
+  reloadOnCreate: false
+
+  # Default reload strategy watches all Secrets/ConfigMaps a workload references
+  # and compares hashes; triggers a rolling restart on drift. This is what
+  # we want for auth rotation — no need for the more targeted "annotations"
+  # strategy which requires per-secret annotations on the workload.
+  reloadStrategy: default
+
+  deployment:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi

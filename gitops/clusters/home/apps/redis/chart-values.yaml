@@ -1,0 +1,64 @@
+# Shared in-cluster Redis with replication + Sentinel, exposed on the LAN as
+# redis.lab.techyon.dev via a MetalLB LoadBalancer Service (see
+# manifests/redis-lb-service.yaml). Every stateful consumer in the lab that
+# needs a Redis cache points here — Immich is the first one.
+#
+# Credentials come from the redis-auth Secret (populated by ExternalSecrets
+# from the RedisHA 1Password item). Rotating the password in 1Password
+# flows through automatically because:
+#   - commonAnnotations places reloader.stakater.com/auto=true on the
+#     redis-node StatefulSet (sentinel mode uses a single StatefulSet for
+#     all nodes, not separate master/replica)
+#   - ESO re-reads the Secret within 15 min
+#   - Reloader detects the content change and rolls the StatefulSet
+#   - new pods come up with the new requirepass
+
+architecture: replication
+
+# Reloader annotation on every resource. Reloader only acts on workloads
+# (StatefulSet, Deployment, DaemonSet) and ignores Services/ConfigMaps,
+# so the extra annotations on non-workload resources are harmless.
+commonAnnotations:
+  reloader.stakater.com/auto: "true"
+
+auth:
+  enabled: true
+  existingSecret: redis-auth
+  existingSecretPasswordKey: password
+
+# With sentinel.enabled, bitnami merges master + replicas into one
+# StatefulSet named "redis-node". The master/replica sections below
+# still control persistence and resource limits per pod.
+master:
+  persistence:
+    enabled: true
+    storageClass: qnap-iscsi
+    size: 8Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+replica:
+  replicaCount: 2
+  persistence:
+    enabled: true
+    storageClass: qnap-iscsi
+    size: 8Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+sentinel:
+  enabled: true
+  quorum: 2
+  masterSet: mymaster
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits:   { cpu: 200m, memory: 128Mi }
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: prometheus-operator
