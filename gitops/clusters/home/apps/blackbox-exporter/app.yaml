@@ -1,0 +1,5 @@
+repoURL: "oci://ghcr.io/prometheus-community/charts/prometheus-blackbox-exporter"
+chart: "prometheus-blackbox-exporter"
+targetRevision: "11.9.1"
+releaseName: "blackbox-exporter"
+namespace: "monitoring"

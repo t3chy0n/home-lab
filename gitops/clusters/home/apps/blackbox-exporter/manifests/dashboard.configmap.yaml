@@ -1,0 +1,116 @@
+# Grafana dashboard provisioned via the kube-prometheus-stack sidecar.
+# The sidecar watches ConfigMaps with `grafana_dashboard: "1"` cluster-wide
+# and imports them into Grafana. Committing the JSON here means the
+# dashboard survives any Grafana pod loss and lives in Git, not the UI.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blackbox-network-probes-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: "Network"
+data:
+  blackbox-network-probes.json: |
+    {
+      "annotations": {"list": []},
+      "editable": false,
+      "graphTooltip": 1,
+      "title": "Network Probes (Blackbox)",
+      "tags": ["network", "blackbox", "probes"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "30s",
+      "time": {"from": "now-6h", "to": "now"},
+      "templating": {"list": []},
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Probes up",
+          "id": 1,
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+          "targets": [{"expr": "count(probe_success == 1)", "refId": "A"}],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}
+          },
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}}
+        },
+        {
+          "type": "stat",
+          "title": "Probes down",
+          "id": 2,
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+          "targets": [{"expr": "count(probe_success == 0) or vector(0)", "refId": "A"}],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}
+          },
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}}
+        },
+        {
+          "type": "stat",
+          "title": "Internet latency (Cloudflare 1.1.1.1)",
+          "id": 3,
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+          "targets": [{"expr": "probe_icmp_duration_seconds{target=\"internet-cloudflare\",phase=\"rtt\"}", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "s", "decimals": 3}}
+        },
+        {
+          "type": "stat",
+          "title": "Powerline latency (far adapter)",
+          "id": 4,
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+          "targets": [{"expr": "probe_icmp_duration_seconds{target=\"powerline-far\",phase=\"rtt\"}", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "s", "decimals": 3}}
+        },
+        {
+          "type": "table",
+          "title": "Probe status by target",
+          "id": 5,
+          "gridPos": {"h": 10, "w": 12, "x": 0, "y": 4},
+          "targets": [{"expr": "probe_success", "format": "table", "instant": true, "refId": "A"}],
+          "transformations": [
+            {"id": "organize", "options": {"excludeByName": {"Time": true, "__name__": true, "instance": true, "job": true, "namespace": true, "pod": true, "service": true, "endpoint": true, "container": true, "prometheus": true}, "indexByName": {"target": 0, "Value": 1}}},
+            {"id": "renameByName", "options": {"renameByName": {"target": "Target", "Value": "Up"}}}
+          ],
+          "fieldConfig": {"defaults": {"custom": {"align": "left"}, "mappings": [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red", "index": 0}, "1": {"text": "UP", "color": "green", "index": 1}}}]}, "overrides": [{"matcher": {"id": "byName", "options": "Up"}, "properties": [{"id": "custom.cellOptions", "value": {"type": "color-background"}}]}]}
+        },
+        {
+          "type": "timeseries",
+          "title": "Probe duration (s) by target",
+          "id": 6,
+          "gridPos": {"h": 10, "w": 12, "x": 12, "y": 4},
+          "targets": [{"expr": "probe_duration_seconds", "legendFormat": "{{target}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "s", "custom": {"lineWidth": 1, "fillOpacity": 0}}}
+        },
+        {
+          "type": "timeseries",
+          "title": "ICMP RTT by hop (lower = closer / healthier)",
+          "id": 7,
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 14},
+          "targets": [{"expr": "probe_icmp_duration_seconds{phase=\"rtt\"}", "legendFormat": "{{target}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "s", "custom": {"lineWidth": 1, "fillOpacity": 0}}}
+        },
+        {
+          "type": "timeseries",
+          "title": "DNS lookup duration",
+          "id": 8,
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [{"expr": "probe_dns_duration_seconds", "legendFormat": "{{target}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "s"}}
+        },
+        {
+          "type": "timeseries",
+          "title": "HTTP probe status code",
+          "id": 9,
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [{"expr": "probe_http_status_code", "legendFormat": "{{target}}", "refId": "A"}]
+        }
+      ]
+    }

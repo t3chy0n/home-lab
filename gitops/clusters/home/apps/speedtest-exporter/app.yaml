@@ -1,0 +1,5 @@
+repoURL: "ghcr.io/t3chy0n/charts"
+chart: "speedtest-exporter"
+targetRevision: "0.1.0"
+releaseName: "speedtest-exporter"
+namespace: "monitoring"

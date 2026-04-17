@@ -1,0 +1,84 @@
+# Minimal speedtest dashboard. The network-overview dashboard (deployed
+# separately) references the same metrics in a combined view; this one is
+# co-located with the exporter for quick "is my ISP delivering" lookups.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: speedtest-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: "Network"
+data:
+  speedtest.json: |
+    {
+      "annotations": {"list": []},
+      "editable": false,
+      "title": "ISP Speedtest",
+      "tags": ["network", "isp", "speedtest"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "5m",
+      "time": {"from": "now-24h", "to": "now"},
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Last download",
+          "id": 1,
+          "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+          "targets": [{"expr": "speedtest_download_bits_per_second", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "bps", "decimals": 1}}
+        },
+        {
+          "type": "stat",
+          "title": "Last upload",
+          "id": 2,
+          "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+          "targets": [{"expr": "speedtest_upload_bits_per_second", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "bps", "decimals": 1}}
+        },
+        {
+          "type": "stat",
+          "title": "Ping",
+          "id": 3,
+          "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+          "targets": [{"expr": "speedtest_ping_latency_milliseconds", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "ms", "decimals": 1}}
+        },
+        {
+          "type": "stat",
+          "title": "Jitter",
+          "id": 4,
+          "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+          "targets": [{"expr": "speedtest_jitter_latency_milliseconds", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "ms", "decimals": 1}}
+        },
+        {
+          "type": "timeseries",
+          "title": "Throughput over time",
+          "id": 5,
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 5},
+          "targets": [
+            {"expr": "speedtest_download_bits_per_second", "legendFormat": "Download", "refId": "A"},
+            {"expr": "speedtest_upload_bits_per_second", "legendFormat": "Upload", "refId": "B"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "bps"}}
+        },
+        {
+          "type": "timeseries",
+          "title": "Ping + Jitter",
+          "id": 6,
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 15},
+          "targets": [
+            {"expr": "speedtest_ping_latency_milliseconds", "legendFormat": "Ping", "refId": "A"},
+            {"expr": "speedtest_jitter_latency_milliseconds", "legendFormat": "Jitter", "refId": "B"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "ms"}}
+        }
+      ]
+    }
