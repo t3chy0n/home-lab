@@ -103,10 +103,10 @@ serviceMonitor:
       url: 192.168.33.24
       module: icmp
 
-    # --- Pi-hole (in-cluster DNS) ---
-    - name: pihole-dns-lb
-      url: 192.168.32.53
-      module: icmp
+    # Pi-hole ICMP probe intentionally omitted: 192.168.32.53 is a
+    # MetalLB LoadBalancer VIP bound only to port 53 (DNS), so ICMP to
+    # that IP never gets an answer. DNS health is covered by the
+    # `dns-pihole` probe below, which is the correct check anyway.
 
     # --- Internet reachability ---
     - name: internet-cloudflare
