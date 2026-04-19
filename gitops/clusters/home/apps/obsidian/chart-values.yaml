@@ -1,34 +1,28 @@
-# Obsidian (sytone/obsidian-remote) — KasmVNC web UI that runs the desktop
-# Obsidian app in a browser. Vault lives on an RWO PVC; plugins are installed
-# by an init container that reads .Values.plugins from this file.
+# Obsidian (linuxserver/obsidian, Selkies web desktop) — Obsidian in the
+# browser. Vault lives on an RWO PVC; plugins are installed by an init
+# container that reads .Values.plugins from this file.
 #
 # Obsidian has no native OIDC, so the ingress is gated by the shared
 # oauth2-proxy at oauth.lab.techyon.dev (same pattern as Pi-hole and Homepage).
 
 replicaCount: 1
 
-image:
-  repository: ghcr.io/sytone/obsidian-remote
-  tag: "latest"
-
 persistence:
   enabled: true
   size: 10Gi
   storageClass: qnap-iscsi
   accessMode: ReadWriteOnce
-  mountPath: /vaults
+  # linuxserver/obsidian persists the user home at /config — Obsidian app
+  # settings AND any created vaults live under this mount.
+  mountPath: /config
 
 vault:
-  path: /vaults/default
+  path: /config/vaults/default
 
 env:
   PUID: "1000"
   PGID: "1000"
   TZ: "Europe/Warsaw"
-
-service:
-  type: ClusterIP
-  port: 8080
 
 ingress:
   enabled: true
@@ -37,9 +31,9 @@ ingress:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: cloudflare-ca
 
-    # KasmVNC keeps a long-lived WebSocket open; nginx's default 60s read
-    # timeout will sever the session mid-edit. 3600s matches typical oauth2
-    # cookie lifetime and is what other KasmVNC deployments use.
+    # Selkies keeps a long-lived WebSocket open for the desktop stream; nginx's
+    # default 60s read timeout will sever the session mid-edit. 3600s matches
+    # typical oauth2 cookie lifetime.
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     # Pasted images and attachments can be large.
