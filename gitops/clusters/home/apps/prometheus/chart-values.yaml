@@ -57,3 +57,8 @@ grafana:
       uid: tempo
       access: proxy
       url: http://tempo.monitoring.svc.cluster.local:3200
+    - name: Pyroscope
+      type: grafana-pyroscope-datasource
+      uid: pyroscope
+      access: proxy
+      url: http://pyroscope.monitoring.svc.cluster.local:4040

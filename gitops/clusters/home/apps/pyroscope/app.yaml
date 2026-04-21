@@ -1,0 +1,5 @@
+repoURL: "https://grafana.github.io/helm-charts"
+chart: "pyroscope"
+targetRevision: "1.21.0"
+releaseName: "pyroscope"
+namespace: "monitoring"

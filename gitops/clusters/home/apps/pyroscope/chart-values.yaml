@@ -1,0 +1,27 @@
+pyroscope:
+  structuredConfig:
+    multitenancy_enabled: false
+
+    storage:
+      backend: filesystem
+      filesystem:
+        dir: /data
+
+  extraArgs:
+    compactor.blocks-retention-period: "720h"
+
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClassName: qnap-iscsi
+    accessModes:
+      - ReadWriteOnce
+
+alloy:
+  enabled: false
+
+agent:
+  enabled: false
+
+minio:
+  enabled: false
