@@ -13,7 +13,7 @@ grafana:
   envFromSecret: grafana-google-oidc
 
   plugins:
-    - grafana-app-observability-app
+    - grafana-frontend-observability-app
 
   grafana.ini:
     server:
