@@ -34,6 +34,15 @@ ingress:
     secretName: github-mcp-basic-auth
     realm: "MCP"
 
+# Probes target /status (returns 200) instead of /sse — the SSE stream never
+# completes within the probe timeout, so the default /sse path leaves the pod
+# stuck NotReady and the Service publishes no endpoints (ingress returns 503).
+probes:
+  readiness:
+    path: /status
+  liveness:
+    path: /status
+
 resources:
   requests:
     cpu: 50m
