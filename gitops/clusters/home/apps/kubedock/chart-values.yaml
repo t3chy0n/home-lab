@@ -1,0 +1,7 @@
+# Override the reaper image. The chart default `bitnami/kubectl:1.32` was removed from
+# Docker Hub when Bitnami deprecated its free catalog (2025-08-28) and relocated the
+# legacy images to the `bitnamilegacy/` org — the old tag now 404s, so the reaper
+# CronJob hits ImagePullBackOff. reap.sh needs bash + GNU `date -d` + kubectl, so the
+# Debian-based legacy image is the correct drop-in (Alpine kubectl images lack both).
+reaper:
+  image: bitnamilegacy/kubectl:1.32
