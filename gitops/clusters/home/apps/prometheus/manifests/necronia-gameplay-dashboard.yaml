@@ -46,7 +46,7 @@ data:
           "id": 1, "title": "Players Online", "type": "stat",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
-          "targets": [{ "expr": "necronia_grains_players_online", "legendFormat": "Online" }],
+          "targets": [{ "expr": "sum(necronia_grains_players_online)", "legendFormat": "Online" }],
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "thresholds" },
@@ -99,11 +99,11 @@ data:
           "gridPos": { "x": 8, "y": 6, "w": 8, "h": 5 },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, rate(necronia_grains_combat_damage_hp_bucket[$interval]))",
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(necronia_grains_combat_damage_hp_bucket[$interval])))",
               "legendFormat": "Damage p99"
             },
             {
-              "expr": "histogram_quantile(0.50, rate(necronia_grains_combat_damage_hp_bucket[$interval]))",
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(necronia_grains_combat_damage_hp_bucket[$interval])))",
               "legendFormat": "Damage p50"
             }
           ],
@@ -140,7 +140,7 @@ data:
           "gridPos": { "x": 8, "y": 11, "w": 8, "h": 5 },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, rate(necronia_grains_conditions_active_bucket[$interval]))",
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(necronia_grains_conditions_active_bucket[$interval])))",
               "legendFormat": "Conditions p99"
             }
           ],
@@ -187,11 +187,11 @@ data:
           "gridPos": { "x": 14, "y": 17, "w": 10, "h": 5 },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, rate(necronia_grains_map_description_build_milliseconds_bucket[$interval]))",
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(necronia_grains_map_description_build_milliseconds_bucket[$interval])))",
               "legendFormat": "Map desc p99"
             },
             {
-              "expr": "histogram_quantile(0.50, rate(necronia_grains_map_description_build_milliseconds_bucket[$interval]))",
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(necronia_grains_map_description_build_milliseconds_bucket[$interval])))",
               "legendFormat": "Map desc p50"
             }
           ],

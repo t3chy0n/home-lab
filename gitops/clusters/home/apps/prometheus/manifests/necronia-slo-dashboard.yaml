@@ -46,7 +46,7 @@ data:
           "id": 1, "title": "Players Online", "type": "stat",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
-          "targets": [{ "expr": "necronia_grains_players_online", "legendFormat": "Online" }],
+          "targets": [{ "expr": "sum(necronia_grains_players_online)", "legendFormat": "Online" }],
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "thresholds" },
@@ -64,7 +64,7 @@ data:
           "id": 2, "title": "Server Up", "type": "stat",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "x": 4, "y": 1, "w": 4, "h": 4 },
-          "targets": [{ "expr": "up{job=\"necronia-server\"}", "legendFormat": "Up" }],
+          "targets": [{ "expr": "clamp_max(count(target_info{job=\"necronia-server\"}), 1) or vector(0)", "legendFormat": "Up" }],
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "thresholds" },

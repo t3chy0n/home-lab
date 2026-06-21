@@ -31,7 +31,7 @@ alloy:
         }
         output {
           traces  = [otelcol.exporter.otlp.tempo.input]
-          logs    = [otelcol.exporter.loki.default.input]
+          logs    = [otelcol.exporter.otlphttp.loki.input]
           metrics = [otelcol.exporter.prometheus.cluster.input]
         }
       }
@@ -81,10 +81,20 @@ alloy:
         }
       }
 
-      otelcol.exporter.loki "default" {
-        forward_to = [loki.write.default.receiver]
+      // App OTLP logs → Loki's native OTLP ingest. Loki maps the OTLP record so
+      // the body becomes the log line (readable), severity → level, and
+      // trace_id/span_id → structured metadata for log↔trace correlation —
+      // instead of dumping the whole record as a JSON blob (the old
+      // otelcol.exporter.loki behaviour). Requires Loki
+      // limits_config.allow_structured_metadata = true (set in ../loki).
+      otelcol.exporter.otlphttp "loki" {
+        client {
+          endpoint = "http://loki.monitoring.svc.cluster.local:3100/otlp"
+        }
       }
 
+      // Faro browser logs still use the classic Loki push API — faro.receiver
+      // emits Loki-format entries (not OTLP), so it keeps loki.write.
       loki.write "default" {
         endpoint {
           url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"

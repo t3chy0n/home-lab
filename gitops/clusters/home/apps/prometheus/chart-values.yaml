@@ -44,12 +44,24 @@ grafana:
   additionalDataSources:
     - name: Loki
       type: loki
+      uid: loki
       access: proxy
       url: http://loki.monitoring.svc.cluster.local:3100
       jsonData:
+        # Native-OTLP logs (alloy-gateway → Loki /otlp) carry the trace id as the
+        # `trace_id` structured-metadata field, which becomes a click-through link
+        # to Tempo. The second entry is a fallback that matches legacy JSON-blob
+        # log lines ("traceid":"<hex>") still within Loki retention.
         derivedFields:
           - name: TraceID
-            matcherRegex: "trace_id=(\\w+)"
+            matcherType: label
+            matcherRegex: trace_id
+            url: "$${__value.raw}"
+            datasourceUid: tempo
+            urlDisplayLabel: View Trace
+          - name: TraceIDLegacy
+            matcherType: regex
+            matcherRegex: '"traceid":"(\w+)"'
             url: "$${__value.raw}"
             datasourceUid: tempo
     - name: Tempo
@@ -57,6 +69,21 @@ grafana:
       uid: tempo
       access: proxy
       url: http://tempo.monitoring.svc.cluster.local:3200
+      jsonData:
+        # Jump from a span to its logs in Loki, matched by trace id within the
+        # span's time window. serviceMap (service graph) is wired in P2 once the
+        # Tempo metrics-generator is enabled.
+        tracesToLogsV2:
+          datasourceUid: loki
+          spanStartTimeShift: "-5m"
+          spanEndTimeShift: "5m"
+          filterByTraceID: true
+          filterBySpanID: false
+          tags:
+            - key: service.name
+              value: service_name
+        nodeGraph:
+          enabled: true
     - name: Pyroscope
       type: grafana-pyroscope-datasource
       uid: pyroscope

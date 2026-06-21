@@ -48,15 +48,15 @@ data:
           "gridPos": { "x": 0, "y": 1, "w": 12, "h": 6 },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, rate(necronia_grains_combat_tick_duration_milliseconds_bucket[$interval]))",
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(necronia_grains_combat_tick_duration_milliseconds_bucket[$interval])))",
               "legendFormat": "p99"
             },
             {
-              "expr": "histogram_quantile(0.50, rate(necronia_grains_combat_tick_duration_milliseconds_bucket[$interval]))",
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(necronia_grains_combat_tick_duration_milliseconds_bucket[$interval])))",
               "legendFormat": "p50"
             },
             {
-              "expr": "histogram_quantile(1.00, rate(necronia_grains_combat_tick_duration_milliseconds_bucket[$interval]))",
+              "expr": "histogram_quantile(1.00, sum by (le) (rate(necronia_grains_combat_tick_duration_milliseconds_bucket[$interval])))",
               "legendFormat": "max"
             }
           ],
@@ -83,7 +83,7 @@ data:
               "legendFormat": "Overruns/min"
             },
             {
-              "expr": "necronia_grains_ecs_posttick_queue_depth",
+              "expr": "sum(necronia_grains_ecs_posttick_queue_depth)",
               "legendFormat": "Post-tick queue"
             }
           ],
@@ -128,11 +128,11 @@ data:
           "gridPos": { "x": 0, "y": 15, "w": 8, "h": 5 },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, rate(necronia_grains_monster_pathfind_duration_milliseconds_bucket[$interval]))",
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(necronia_grains_monster_pathfind_duration_milliseconds_bucket[$interval])))",
               "legendFormat": "Pathfind p99"
             },
             {
-              "expr": "histogram_quantile(0.50, rate(necronia_grains_monster_pathfind_duration_milliseconds_bucket[$interval]))",
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(necronia_grains_monster_pathfind_duration_milliseconds_bucket[$interval])))",
               "legendFormat": "Pathfind p50"
             }
           ],
@@ -178,7 +178,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "x": 0, "y": 21, "w": 8, "h": 5 },
           "targets": [{
-            "expr": "histogram_quantile(0.99, rate(necronia_grains_ground_items_bucket[$interval]))",
+            "expr": "histogram_quantile(0.99, sum by (le) (rate(necronia_grains_ground_items_bucket[$interval])))",
             "legendFormat": "Ground items p99"
           }],
           "fieldConfig": { "defaults": { "unit": "short" } }
@@ -189,7 +189,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "x": 8, "y": 21, "w": 8, "h": 5 },
           "targets": [{
-            "expr": "histogram_quantile(0.99, rate(necronia_grains_conditions_active_bucket[$interval]))",
+            "expr": "histogram_quantile(0.99, sum by (le) (rate(necronia_grains_conditions_active_bucket[$interval])))",
             "legendFormat": "Conditions p99"
           }],
           "fieldConfig": { "defaults": { "unit": "short" } }
