@@ -91,6 +91,10 @@ grafana:
           tags:
             - key: service.name
               value: service_name
+        # Service Graph reads the Tempo metrics-generator output from Prometheus
+        # (the default datasource, uid: prometheus). Powers the topology view.
+        serviceMap:
+          datasourceUid: prometheus
         nodeGraph:
           enabled: true
     - name: Pyroscope
