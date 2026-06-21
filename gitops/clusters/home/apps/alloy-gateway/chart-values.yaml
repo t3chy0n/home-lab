@@ -101,14 +101,18 @@ alloy:
         }
       }
 
-      // OTLP metrics → Prometheus remote_write (requires enableRemoteWriteReceiver on Prometheus CRD)
+      // OTLP metrics → Prometheus remote_write. Target the main kube-prometheus-stack
+      // instance (enableRemoteWriteReceiver set in ../prometheus/chart-values.yaml) — this
+      // is the instance Grafana queries by default, so dashboards see the data. The old
+      // target (prometheus-operated) resolved to a receiver-less instance and 404'd every
+      // push.
       otelcol.exporter.prometheus "cluster" {
         forward_to = [prometheus.remote_write.cluster.receiver]
       }
 
       prometheus.remote_write "cluster" {
         endpoint {
-          url = "http://prometheus-operated.monitoring.svc.cluster.local:9090/api/v1/write"
+          url = "http://prometheus-operator-kube-p-prometheus.monitoring.svc.cluster.local:9090/api/v1/write"
         }
       }
 

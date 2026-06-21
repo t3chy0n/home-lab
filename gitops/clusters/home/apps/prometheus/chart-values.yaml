@@ -3,6 +3,15 @@
 crds:
   enabled: true
 
+# Accept Prometheus remote_write pushes on the main instance. OTLP metrics from
+# external apps (e.g. the Necronia dev server) are relayed by alloy-gateway via
+# prometheus.remote_write and now land here, the same instance Grafana queries by
+# default. Consolidated from the former standalone `prometheus` CR receiver, which
+# had no Service and no datasource (removed in manifests/).
+prometheus:
+  prometheusSpec:
+    enableRemoteWriteReceiver: true
+
 grafana:
   # Google Workspace OIDC. Client ID + Secret are injected as env vars from
   # the grafana-google-oidc Secret (populated from 1Password via the
